@@ -4,7 +4,7 @@ Provides versioning from URL path, was written for Zend Expressive.
 ## Installation
 Install using composer:
 ```
-$ composer require sheridans/version-middleware
+$ composer require sheridan/version-middleware
 ```
 
 ## Usage
