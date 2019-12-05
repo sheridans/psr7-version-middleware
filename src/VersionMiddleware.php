@@ -22,7 +22,7 @@ class VersionMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        return $handler->handle($request);
+         return $handler->handle($this->extractVersionFromPath($request));
     }
 
     /**
