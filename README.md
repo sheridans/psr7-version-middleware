@@ -1,5 +1,5 @@
 # version-middleware
-Provides versioning from URL path, was written for Zend Expressive.
+PSR-15 middleware that extracts API version prefixes from the URL path. Works with any PSR-15 framework (Mezzio, Slim, etc.).
 
 ## Installation
 Install using composer:
