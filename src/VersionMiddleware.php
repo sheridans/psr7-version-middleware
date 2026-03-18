@@ -9,48 +9,29 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-/**
- * Middleware for managing app versions
- */
-class VersionMiddleware implements MiddlewareInterface
+final class VersionMiddleware implements MiddlewareInterface
 {
+    private const string VERSION_PATTERN = '/^\/(legacy|latest|dev|v[\d]+?)\//';
 
-    /**
-     * @param ServerRequestInterface $request
-     * @param RequestHandlerInterface $handler
-     * @return ResponseInterface
-     */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-         return $handler->handle($this->extractVersionFromPath($request));
+        return $handler->handle($this->extractVersionFromPath($request));
     }
 
-    /**
-     * If path has version, extract and correct path
-     * @param ServerRequestInterface $request
-     * @return ServerRequestInterface
-     */
-    public function extractVersionFromPath(ServerRequestInterface $request) : ServerRequestInterface
+    public function extractVersionFromPath(ServerRequestInterface $request): ServerRequestInterface
     {
-        // get URI & path
-        $uri = $request->getUri();
+        $uri  = $request->getUri();
         $path = $uri->getPath();
 
-        // version extract pattern, ie dev|latest|legacy|v1|v2|v3
-        $pattern = '/^\/(legacy|latest|dev|v[\d]+?)\//';
-        if (preg_match($pattern, $path, $matches)) {
-            // API version extracted from URI
+        if (preg_match(self::VERSION_PATTERN, $path, $matches)) {
             $apiVersion = $matches[1];
-            // Remainder of URI path
-            $newPath = substr($path, strlen($matches[0]) - 1);
+            $newPath    = substr($path, strlen($matches[0]) - 1);
 
-            // return request with the remainder of the URI path, add API version as request attribute
             return $request
                 ->withUri($uri->withPath($newPath))
                 ->withAttribute(self::class, $apiVersion);
         }
 
-        // not versioned
         return $request;
     }
 }

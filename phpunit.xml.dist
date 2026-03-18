@@ -2,16 +2,17 @@
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
-         colors="true">
+         colors="true"
+         cacheDirectory=".phpunit.cache">
     <testsuites>
         <testsuite name="Psr7Versioning\VersionMiddleware Tests">
             <directory>./test</directory>
         </testsuite>
     </testsuites>
 
-    <filter>
-        <whitelist>
+    <source>
+        <include>
             <directory suffix=".php">./src</directory>
-        </whitelist>
-    </filter>
+        </include>
+    </source>
 </phpunit>

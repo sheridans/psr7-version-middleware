@@ -1,111 +1,67 @@
 <?php
 
-namespace Psr7Versioning;
+declare(strict_types=1);
 
+namespace Psr7VersioningTest;
+
+use Laminas\Diactoros\ServerRequest;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Zend\Diactoros\ServerRequest;
+use Psr7Versioning\VersionMiddleware;
 
-/**
- * Class VersionMiddlewareTest
- *
- */
-class VersionMiddlewareTest extends TestCase
+final class VersionMiddlewareTest extends TestCase
 {
-    /**
-     * Return middleware class
-     *
-     * @return VersionMiddleware
-     */
-    protected function getMiddleware() : VersionMiddleware
+    private VersionMiddleware $middleware;
+
+    protected function setUp(): void
     {
-        return new VersionMiddleware();
+        $this->middleware = new VersionMiddleware();
     }
 
-    /**
-     * Data provider version tests
-     *
-     * @dataProvider pathVersionProvider
-     * @param        $path
-     * @param        $expected
-     */
-    public function testGetVersionFromPath($path, $expected) : void
-    {
-        $this->assertEquals($expected, $this->getVersionFromPath($path));
-    }
-
-    /**
-     * Data provider for path tests
-     *
-     * @dataProvider pathUriProvider
-     * @param $uri
-     * @param $expected
-     */
-    public function testGetPathFromUri($uri, $expected) : void
-    {
-        $this->assertEquals($expected, $this->getPathFromUri($uri));
-    }
-
-    /**
-     * Extract version from path
-     *
-     * @param  string $path
-     * @return string|null
-     */
-    public function getVersionFromPath(string $path) : ?string
+    #[DataProvider('pathVersionProvider')]
+    public function testGetVersionFromPath(string $path, ?string $expected): void
     {
         $request = new ServerRequest([], [], $path);
-        $middleware = $this->getMiddleware();
-        $result = $middleware->extractVersionFromPath($request);
+        $result  = $this->middleware->extractVersionFromPath($request);
 
-        return $result->getAttribute(VersionMiddleware::class);
+        $this->assertSame($expected, $result->getAttribute(VersionMiddleware::class));
     }
 
-    /**
-     * Extract path component from uri
-     *
-     * @param string $uri
-     * @return string|null
-     */
-    public function getPathFromUri(string $uri) : ?string
+    #[DataProvider('pathUriProvider')]
+    public function testGetPathFromUri(string $uri, string $expected): void
     {
         $request = new ServerRequest([], [], $uri);
-        $middleware = $this->getMiddleware();
+        $result  = $this->middleware->extractVersionFromPath($request);
 
-        $result = $middleware->extractVersionFromPath($request);
-
-        return $result->getUri()->getPath();
+        $this->assertSame($expected, $result->getUri()->getPath());
     }
 
-    /**
-     * @return array
-     */
-    public function pathVersionProvider() : array
+    /** @return array<string, array{string, ?string}> */
+    public static function pathVersionProvider(): array
     {
         return [
-            ['/dev/api', 'dev'],
-            ['/latest/api/test', 'latest'],
-            ['/legacy/api/call', 'legacy'],
-            ['/v1/v2/v3', 'v1'],
-            ['/v2/legacy/dev', 'v2'],
-            ['/v3/v3/call', 'v3'],
-            ['//v3', null],
-            ['v1/v2/v3', null],
+            'dev version'          => ['/dev/api', 'dev'],
+            'latest version'       => ['/latest/api/test', 'latest'],
+            'legacy version'       => ['/legacy/api/call', 'legacy'],
+            'v1 numeric'           => ['/v1/v2/v3', 'v1'],
+            'v2 numeric'           => ['/v2/legacy/dev', 'v2'],
+            'v3 numeric'           => ['/v3/v3/call', 'v3'],
+            'empty segment'        => ['//v3', null],
+            'no leading slash'     => ['v1/v2/v3', null],
         ];
     }
 
-    /**
-     * @return array
-     */
-    public function pathUriProvider() : array
+    /** @return array<string, array{string, string}> */
+    public static function pathUriProvider(): array
     {
         return [
-            ['/dev/api', '/api'],
-            ['/latest/api/test', '/api/test'],
-            ['/legacy/api/call', '/api/call'],
-            ['/v1/v2/v3', '/v2/v3'],
-            ['/v2/legacy/dev/', '/legacy/dev/'],
-            ['/v3/v3/call', '/v3/call'],
-            ['v1/v2/v3', 'v1/v2/v3'],
+            'dev path'             => ['/dev/api', '/api'],
+            'latest path'          => ['/latest/api/test', '/api/test'],
+            'legacy path'          => ['/legacy/api/call', '/api/call'],
+            'v1 strips first'      => ['/v1/v2/v3', '/v2/v3'],
+            'v2 preserves rest'    => ['/v2/legacy/dev/', '/legacy/dev/'],
+            'v3 nested'            => ['/v3/v3/call', '/v3/call'],
+            'no leading slash'     => ['v1/v2/v3', 'v1/v2/v3'],
         ];
     }
 }
